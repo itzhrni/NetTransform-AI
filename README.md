@@ -23,7 +23,51 @@ npm run dev
 
 ## Built with
 
+<<<<<<< HEAD
 - TanStack Start
 - TypeScript
 - React
 - Tailwind CSS
+=======
+Sign in, build/save a topology, run a scenario, compare recovery strategies, adjust weights/budget, inspect every candidate, and request an evidence explanation. History reload and JSON export retain experiment snapshots and recommendations. Saved topology remains canonical; candidate graphs are experiment proposals and are not deployed or automatically applied.
+
+Optional API container: `docker compose up --build api` (frontend continues with `npm run dev`). Container definitions are supplied; Docker execution has not been verified here.
+
+## AI explanations
+
+Without a provider, the assistant returns a labeled deterministic evidence explanation. To enable generated explanations set server-only `ASSISTANT_URL`, `ASSISTANT_MODEL`, and optional `ASSISTANT_API_KEY`. The configured endpoint accepts chat-completion JSON (`model`, `temperature`, `messages`) and returns `choices[0].message.content`. It may be a local or hosted service. Only an explicit explanation request calls it. Provider failure retains the deterministic explanation; generated text never changes simulation scores or topology. Provider transport is covered with test doubles; a live provider has not been exercised.
+
+## Verify
+
+```powershell
+cd backend
+python -m unittest discover -s tests -p "test_*.py"
+python export_contract.py --check
+python -m compileall -q app
+cd ..
+npx tsc --noEmit
+npm run build
+git diff --check
+```
+
+Pydantic is the topology schema source of truth. `python export_contract.py` in backend regenerates the JSON Schema and frontend TypeScript contract. Existing Supabase row configurations map into this shape; no second topology store is introduced.
+
+See [audit](docs/repository-audit.md), [model and API](docs/network-failure-simulation.md), and [actual verification status](project-status.md). Live Supabase/RLS, signed-in browser interactions, live AI and Docker remain separately identified verification requirements.
+
+## Authentication and configuration diagnostics
+
+The backend resolves root/backend `.env` files using absolute repository paths, with backend-local and then process-environment overrides. Use the same Supabase URL and public key for `SUPABASE_*` and `VITE_SUPABASE_*`; conflicting values fail safely. `SUPABASE_ANON_KEY` is a legacy fallback. Settings load once per process, so restart after editing environment values. `GET /api/configuration/supabase` exposes only the project reference, key category and configuration flags; local validity is not an upstream credential check.
+
+Protected endpoints use the OpenAPI `SupabaseBearer` scheme. The API sends the project key in `apikey` and the user's session token in `Authorization: Bearer`. Opaque publishable keys are never used as user tokens. Missing/invalid/expired sessions return 401, Supabase project-key rejection returns 503, database permission denial returns 403, and unreachable/malformed upstream data returns 502. Experiment insert/update success requires database confirmation, not an empty response. No migrations need rerunning for these fixes.
+
+The frontend reads the current session for every protected request and refreshes once after a 401; it does not retry configuration or persistence failures. Public analysis requests remain stateless. `VITE_API_URL` accepts an API origin or trailing `/api` without duplicating the route prefix. Run frontend request/proxy tests with `npm run test:api` (Node 24), type checking with `npm run typecheck`.
+
+### NSGA-II and operator decisions
+
+The failure-simulation workflow supports opt-in pymoo NSGA-II, evaluated Pareto alternatives, and owner-scoped experiment plan selection/acceptance/rejection. See [the implementation and verification report](docs/optimization-decision-milestones.md) for objective/constraint definitions, provider output requirements and remaining live verification gates. Candidate plans do not deploy or overwrite the saved topology.
+# Interactive traffic simulation
+
+The existing Failure Simulation page now includes **Interactive application traffic, risk and recovery**. Choose a scenario or try the labeled home, office, multi-branch and WAN examples. Run bounded synthetic packet events, inspect queue loss and rerouted applications, and explore NSGA-II alternatives. This does not send real packets or overwrite your saved network.
+
+See [the traffic simulation guide](docs/traffic-simulation-upgrade.md) for launch commands, demonstration cases, formulas, supported what-if actions, AI configuration and model limits. The original analytical workflow and saved experiments remain available.
+>>>>>>> origin/nettransform-integration
